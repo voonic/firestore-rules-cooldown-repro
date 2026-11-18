@@ -1,0 +1,14 @@
+{
+  "name": "firestore-rules-cooldown-repro",
+  "private": true,
+  "description": "Several writes to one document in one commit get past a per-document cooldown rule.",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project demo-repro \"node repro.mjs\""
+  },
+  "dependencies": {
+    "firebase": "12.12.1"
+  },
+  "devDependencies": {
+    "firebase-tools": "15.10.0"
+  }
+}
