@@ -48,6 +48,9 @@ stamps `updatedAt`.
 5. Sends 3 updates of the second document in one transaction.
 6. Updates the first document again right away.
 
+For steps 4 and 5 it turns on the SDK's debug log and prints from it each
+write in the request that was sent, and each result in the reply.
+
 ## Result
 
 | Step | If the cooldown held for every write | What happens |
@@ -62,20 +65,49 @@ Output:
 ```
 REFUSED  1 update, right after the create  [permission-denied]
 ALLOWED  3 updates of one document in one batch
-         count: 3
+         request sent: 3 writes
+           write 1: counters/a, count: increment { integerValue: '1' }
+           write 2: counters/a, count: increment { integerValue: '1' }
+           write 3: counters/a, count: increment { integerValue: '1' }
+         reply received: 3 write results
+           result 1: count { integerValue: '1' }
+           result 2: count { integerValue: '2' }
+           result 3: count { integerValue: '3' }
+         count stored: 3
 ALLOWED  3 updates of one document in one transaction
-         count: 3
+         request sent: 3 writes
+           write 1: counters/b, count: increment { integerValue: '1' }
+           write 2: counters/b, count: increment { integerValue: '1' }
+           write 3: counters/b, count: increment { integerValue: '1' }
+         reply received: 3 write results
+           result 1: count { integerValue: '1' }
+           result 2: count { integerValue: '2' }
+           result 3: count { integerValue: '3' }
+         count stored: 3
 REFUSED  1 update, right after the batch  [permission-denied]
 ```
 
-The cooldown holds between commits and not inside one. All three writes are
-applied: the counter ends at 3.
+The cooldown holds between commits and not inside one.
+
+These are three writes, not one. Each request holds three separate writes of
+the same document, and the reply holds one result for each, with `count` at
+1, then 2, then 3.
+
+## Question: how is this billed?
+
+The emulator does not bill, so this repo cannot tell.
+
+The [billing page](https://firebase.google.com/docs/firestore/pricing) says
+"each set or update operation counts as a single write". Is a commit like
+this one billed as three document writes, or as one?
+
+If it is three, a rule like this limits how often a document changes, and
+not how many writes a client can be billed for.
 
 ## What this does not show
 
 - Whether production Firestore behaves the same way.
 - How many times the rule is evaluated for such a commit.
-- How such a commit is billed.
 
 ## Versions
 
